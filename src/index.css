@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #F8F7F4;
+  --ink: #111113;
+  --accent: #B8860B;
+}
+
+body {
+  background-color: #F8F7F4;
+  color: #111113;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .font-editorial {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: -0.02em;
+}
+
+.mono, .font-mono-code {
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 0.12em;
+}
+
+.label-bracket {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(17, 17, 19, 0.6);
+  font-weight: 700;
+  display: block;
+}
+
+::selection {
+  background: #B8860B;
+  color: #F8F7F4;
+}
+
+/* Custom scrollbars matching architectural minimalism */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F8F7F4;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(17, 17, 19, 0.2);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B8860B;
+}
