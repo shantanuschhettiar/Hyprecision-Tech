@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI } from '@google/genai';
 import {
   Sparkles,
   Send,
@@ -15,7 +14,7 @@ import {
   HelpCircle,
   FileSpreadsheet,
 } from 'lucide-react';
-import { ProductItem } from '../types.ts';
+import type { ProductItem } from '../types.ts';
 
 interface AiAssistantModalProps {
   initialPrompt?: string;
@@ -37,12 +36,6 @@ interface Message {
   suggestedFollowUps?: string[];
   timestamp: string;
 }
-
-// Retrieve Gemini API key from environment
-const GEMINI_API_KEY =
-  (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) ||
-  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GEMINI_API_KEY) ||
-  '';
 
 /**
  * Format markdown text (bold, bullet points, numbers) cleanly
@@ -115,7 +108,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
     {
       id: 'm-init',
       role: 'assistant',
-      text: 'Welcome to the HY Precision Technology AI Engineering Assistant powered by Gemini 3.8 Flash.\n\nI am directly connected to the Gemini API and actively analyze the live inventory catalog. I can answer technical questions regarding positive displacement screw pumps, 350 Bar bladder accumulators, 5-axis aerospace titanium machining, ASME Section VIII filtration skids, cavitation prevention, or execute database updates in Admin mode.\n\nWhat engineering question or catalog inquiry can I assist you with today?',
+      text: 'Welcome! I am Chrollo, the HY Precision Technology AI Engineering Agent powered by Gemini 3.8 Flash.\n\nI am directly connected to the Gemini API and actively analyze the live inventory catalog. I can answer technical questions regarding positive displacement screw pumps, 350 Bar bladder accumulators, 5-axis aerospace titanium machining, ASME Section VIII filtration skids, cavitation prevention, or execute database updates in Admin mode.\n\nWhat engineering question or catalog inquiry can I assist you with today?',
       suggestedFollowUps: [
         'How do three-spindle screw pumps work?',
         'What is the max working pressure of your bladder accumulator?',
@@ -142,109 +135,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
   }, []);
 
   /**
-   * Directly query the Gemini API to analyze the 'products' state and answer user questions
-   */
-  const queryGeminiDirect = async (
-    query: string,
-    historyPayload: Array<{ role: string; text: string }>
-  ) => {
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not defined in environment');
-    }
-
-    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-    // Extract structured snapshot of the current 'products' state
-    const productsSnapshot = products.map((p) => ({
-      sku: p.sku,
-      title: p.title,
-      category: p.category_name || (p as any).category,
-      price_usd: p.price_usd,
-      stock_quantity: p.stock_quantity,
-      lead_time_days: p.lead_time_days,
-      specifications: p.specifications?.map((s) => `${s.key}: ${s.value} ${s.unit || ''}`.trim()) || [],
-      certifications: p.certifications || [],
-    }));
-
-    const historyFormatted =
-      historyPayload.length > 0
-        ? historyPayload.map((h) => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.text}`).join('\n')
-        : 'None (initial question)';
-
-    const promptText = `You are the Lead Systems Engineering Specialist & Technical Solutions Architect at HY Precision Technology (hyprecisiontechnology.com).
-Your primary duty is to ACTUALLY AND DIRECTLY ANSWER all user questions with deep engineering authority, technical precision, and practical clarity, actively grounded on the live 'products' state.
-
-Company Background:
-- Organization: HY Precision Technology
-- Official Certifications: ISO 9001:2015 Quality Management & ASME Boiler & Pressure Vessel Code Section VIII Division 1.
-- Partnerships: Official distributor for Euro Offshore Ltd. & Fluen Co. Korea.
-- Facilities: Manufacturing Works at Renaissance Industrial Park, Thane; Engineering Office at Bhumi World, Bhiwandi, Maharashtra 421302, India.
-- Direct Sales Contact: sales@hyprecisiontechnology.com, +91 70836 78003.
-
-ACTIVE LIVE 'PRODUCTS' STATE (${products.length} Items in memory):
-${JSON.stringify(productsSnapshot, null, 2)}
-
-User Role: ${userRole}
-Conversation History:
-${historyFormatted}
-
-User Message: "${query}"
-
-CRITICAL INSTRUCTIONS:
-1. DIRECTLY AND THOROUGHLY ANSWER THE USER'S QUESTION:
-   - Provide a complete, highly knowledgeable answer. Explain the engineering principles, fluid dynamics, metallurgy, manufacturing tolerances, operational benefits, and practical considerations.
-   - Ground your answer in the active 'products' state above. If the question relates to components in the catalog, reference them by exact SKU and title, explain their relevant specs (pressure rating, material, lead time, price, stock), and include their SKUs in "matchedSkus".
-   - If the user asks general engineering questions (e.g. "How do screw pumps work?", "What is a bladder accumulator?", "Why choose Titanium over 316L?", "What is cavitation and how do you prevent it?", "Where are your facilities?"), write a thorough, well-structured answer with technical specifics and clear paragraphs or bullet points. DO NOT give a lazy 1-line response.
-2. SEARCH & FILTERING INTENT:
-   - If the user explicitly wants to search, filter, or recommend items (e.g. "Find pumps with pressure > 30 Bar under $2000", "Show low stock items"):
-     * Set "action": "SEARCH_RESULTS"
-     * Provide a clear explanation of how the matched items from the 'products' state meet the criteria.
-     * Set "matchedSkus" to the matching SKU list.
-3. COMPARISON INTENT:
-   - If the user asks to compare 2 or 3 components from the 'products' state:
-     * Set "action": "COMPARE_PRODUCTS"
-     * Provide a comparative breakdown of key differences in pressure, materials, use-cases, and lead times.
-     * Set "matchedSkus" to the SKUs being compared.
-4. ADMIN DATABASE UPDATE INTENT:
-   - If userRole === 'admin' and the prompt requests modifying a database record (e.g. "Update stock of HY-SP-40B to 25", "Set price of HY-ACC-BLD to $890"):
-     * Set "action": "EXECUTE_DB_COMMAND"
-     * Set "command": { "type": "UPDATE_PRODUCT", "sku": "...", "fields": { ... } }
-     * Set "answer": Clear confirmation of the database transaction committed.
-5. SUGGESTED FOLLOW-UPS:
-   - Provide 2 to 3 concise, highly relevant follow-up questions in "suggestedFollowUps" that the user might want to ask next.
-
-Return strictly a valid JSON object matching this schema (no markdown formatting, no backticks):
-{
-  "action": "ANSWER" | "SEARCH_RESULTS" | "COMPARE_PRODUCTS" | "EXECUTE_DB_COMMAND",
-  "answer": "The full, articulate, highly informative answer to the question...",
-  "explanation": "Same as answer",
-  "matchedSkus": ["SKU-1", "SKU-2"],
-  "suggestedFollowUps": ["Follow-up question 1?", "Follow-up question 2?"],
-  "command": { "type": "UPDATE_PRODUCT", "sku": "...", "fields": {} }
-}`;
-
-    const geminiPromise = ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: promptText,
-    });
-
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Gemini API timeout')), 7000)
-    );
-
-    const response = await Promise.race([geminiPromise, timeoutPromise]);
-    const cleanJson = (response.text || '').replace(/```json|```/g, '').trim();
-    const data = JSON.parse(cleanJson);
-
-    if (!data.answer && data.explanation) {
-      data.answer = data.explanation;
-    }
-
-    return data;
-  };
-
-  /**
-   * Fallback to backend /api/ai/query-manager with full products payload
+   * Query the server-side Gemini agent at /api/ai/query-manager
    */
   const queryBackendAssistant = async (
     query: string,
@@ -290,16 +181,8 @@ Return strictly a valid JSON object matching this schema (no markdown formatting
         .slice(-8)
         .map((m) => ({ role: m.role, text: m.text }));
 
-      let data: any = null;
-
-      // 1. First attempt: Direct connection to Gemini API with live products state
-      try {
-        data = await queryGeminiDirect(query, historyPayload);
-      } catch (clientErr) {
-        console.warn('Direct Gemini client query bypassed or failed, falling back to server query-manager:', clientErr);
-        // 2. Second attempt: Full-stack server agent endpoint with live products state
-        data = await queryBackendAssistant(query, historyPayload);
-      }
+      // Query server-side Gemini API agent
+      const data = await queryBackendAssistant(query, historyPayload);
 
       // If an admin update was requested, execute it against the database
       if (
@@ -344,7 +227,7 @@ Return strictly a valid JSON object matching this schema (no markdown formatting
         {
           id: 'err_' + Date.now(),
           role: 'assistant',
-          text: 'Encountered an issue communicating with the Gemini engineering agent. Please try again or rephrase your question.',
+          text: 'Chrollo encountered an issue communicating with the engineering service. Please try again or rephrase your question.',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
@@ -382,7 +265,7 @@ Return strictly a valid JSON object matching this schema (no markdown formatting
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-editorial text-xl sm:text-2xl font-bold tracking-tight">
-                  Gemini Engineering Q&A & DB Agent
+                  Chrollo
                 </h3>
                 <span className="mono text-[9px] text-[#B8860B] border border-[#B8860B]/40 px-1.5 py-0.5">
                   GEMINI 3.8 FLASH
@@ -540,7 +423,7 @@ Return strictly a valid JSON object matching this schema (no markdown formatting
           {isProcessing && (
             <div className="flex items-center gap-2 text-[#111113]/70 mono text-[11px] italic pl-11">
               <RefreshCw size={13} className="animate-spin text-[#B8860B]" />
-              <span>Gemini 3.8 Flash is analyzing engineering principles and live database...</span>
+              <span>Chrollo is analyzing engineering principles and live database...</span>
             </div>
           )}
         </div>

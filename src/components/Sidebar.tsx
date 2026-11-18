@@ -50,25 +50,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* DESKTOP SIDEBAR (Persistent 280px architectural panel) */}
       <aside className="hidden lg:flex w-72 h-screen sticky top-0 flex-col justify-between border-r border-black/10 bg-[#F8F7F4] p-8 overflow-y-auto z-20 shrink-0">
         <div>
-          {/* Brand Mark */}
+          {/* Brand Mark matching Variation 1 Prototype */}
           <div
             onClick={() => onSelectCategory('all')}
             className="cursor-pointer group mb-8 select-none"
           >
-            <div className="font-editorial text-3xl font-bold tracking-tight text-[#111113] group-hover:text-[#B8860B] transition-colors leading-none">
-              HY-PRECISION
+            <div className="font-editorial text-4xl font-bold tracking-tight text-[#111113] group-hover:text-[#B8860B] transition-colors leading-none">
+              HY
             </div>
-            <div className="mono text-[9px] text-[#B8860B] tracking-widest mt-1.5 uppercase font-bold">
-              & Euro Offshore Group JV
+            <div className="mono text-[10px] text-[#111113] tracking-widest mt-1.5 uppercase font-bold">
+              PRECISION TECHNOLOGY
             </div>
-            <div className="text-[10px] text-[#111113]/50 mt-1 italic font-editorial">
-              Bhiwandi, India & Werkendam, Netherlands
+            <div className="text-xs text-[#111113]/60 mt-1 italic font-editorial">
+              Confidence, not just components.
+            </div>
+            <div className="mono text-[9px] text-[#B8860B] tracking-wider mt-1.5 uppercase font-semibold">
+              JOINT VENTURE // EURO OFFSHORE
             </div>
           </div>
 
           {/* Section [01] Navigation */}
           <nav className="space-y-4 mb-8">
-            <span className="label-bracket">[01] Vessel & Division Portfolio</span>
+            <span className="label-bracket">[01] NAVIGATION</span>
             <div className="space-y-1">
               {navCategories.map((cat) => {
                 const isActive = selectedCategory === cat.slug;

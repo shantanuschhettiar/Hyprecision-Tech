@@ -1,4 +1,4 @@
-import { ProductItem, FormalQuotationOffer, QuotationRequestItem, TechnicalSpecMatrixRow } from '../types.ts';
+import type { ProductItem, FormalQuotationOffer, QuotationRequestItem, TechnicalSpecMatrixRow } from '../types.ts';
 
 export const JOINT_VENTURE_DETAILS = {
   companyName: 'Hy-Precision Technology',

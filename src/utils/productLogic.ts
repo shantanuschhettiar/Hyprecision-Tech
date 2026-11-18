@@ -1,4 +1,4 @@
-import { ProductItem, ProductSpecification } from '../types.ts';
+import type { ProductItem, ProductSpecification } from '../types.ts';
 
 export type { ProductItem, ProductSpecification };
 

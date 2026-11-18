@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
-  SlidersHorizontal,
   CheckCircle2,
   Plus,
   ArrowRight,
@@ -13,6 +12,8 @@ import {
   Filter,
   FileSpreadsheet,
   ZoomIn,
+  ShieldCheck,
+  Check,
 } from 'lucide-react';
 import { ProductItem } from '../types.ts';
 import { filterAndSortProducts, FilterOptions } from '../utils/productLogic.ts';
@@ -28,6 +29,8 @@ interface ProductCatalogProps {
   onViewProductDetail: (product: ProductItem) => void;
   onRequestQuote: (product: ProductItem) => void;
   onViewFormalOffer?: (product: ProductItem) => void;
+  externalSearch?: string;
+  onResetSearch?: () => void;
 }
 
 export const ProductCatalog: React.FC<ProductCatalogProps> = ({
@@ -41,12 +44,20 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
   onViewProductDetail,
   onRequestQuote,
   onViewFormalOffer,
+  externalSearch = '',
+  onResetSearch,
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(externalSearch);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [sortBy, setSortBy] = useState<FilterOptions['sortBy']>('sku');
   const [maxPriceFilter, setMaxPriceFilter] = useState<number | undefined>(undefined);
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
+
+  useEffect(() => {
+    if (externalSearch !== undefined) {
+      setSearchTerm(externalSearch);
+    }
+  }, [externalSearch]);
 
   const filtered = filterAndSortProducts(products, {
     categorySlug: selectedCategory,
@@ -56,38 +67,57 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
     maxPrice: maxPriceFilter,
   });
 
+  const categoriesList = [
+    { slug: 'all', label: 'All Fleet & Systems' },
+    { slug: 'governmental-military', label: 'Governmental & Defense' },
+    { slug: 'alunautic-aluminium', label: 'Alunautic Aluminium' },
+    { slug: 'blue-spirit-ribs', label: 'Blue Spirit RIBs' },
+    { slug: 'fibre-shark-grp', label: 'Fibre Shark GRP' },
+    { slug: 'hdpe-workboats', label: 'HDPE Indestructible' },
+    { slug: 'eo-lifesaving', label: 'EO Lifesaving & Davits' },
+    { slug: 'aquacat-catamarans', label: 'AquaCat Catamarans' },
+  ];
+
   return (
-    <section>
-      {/* Variation 1 Section Label */}
+    <section id="fleet-catalogue" className="pt-2 pb-16">
+      {/* Section Header matching clean prototype */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
         <div>
-          <span className="label-bracket mb-1">[03] Joint Venture Marine Fleet</span>
-          <h2 className="font-editorial text-3xl sm:text-4xl font-normal text-[#111113]">
-            Workboats, Patrol Vessels & Lifesaving Systems
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">
+              [ Fleet Catalogue &amp; Specifications ]
+            </span>
+            <span className="text-xs text-slate-400">·</span>
+            <span className="text-xs text-slate-500 font-medium">IMO &amp; IACS Verified</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            Specialized Vessels &amp; Engineering Systems
           </h2>
-          <p className="text-xs text-[#111113]/60 mt-1">
-            Displaying <span className="font-bold text-[#111113]">{filtered.length}</span> naval
-            craft and marine platforms co-manufactured with Euro Offshore Group.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Displaying <span className="font-bold text-slate-800">{filtered.length}</span> verified platforms with full technical parameters and certified drawings.
           </p>
         </div>
 
         {/* Search & Sort Controls */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="relative w-full sm:w-60">
-            <Search className="absolute left-3 top-2.5 text-[#111113]/40" size={14} />
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-2.5 text-slate-400" size={15} />
             <input
               type="text"
-              placeholder="Search SKU, specs, title..."
+              placeholder="Search SKU, vessel, engine..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 bg-white border border-black/10 text-xs text-[#111113] placeholder-[#111113]/40 focus:outline-none focus:border-[#B8860B] transition"
+              className="w-full pl-8 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition"
             />
             {searchTerm && (
               <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
+                onClick={() => {
+                  setSearchTerm('');
+                  if (onResetSearch) onResetSearch();
+                }}
+                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
-                <X size={13} />
+                <X size={14} />
               </button>
             )}
           </div>
@@ -95,48 +125,44 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-3 py-2 bg-white border border-black/10 text-xs text-[#111113] focus:outline-none focus:border-[#B8860B] cursor-pointer"
+            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer"
           >
-            <option value="sku">Sort: SKU</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="stock">Stock Level</option>
-            <option value="name">Product Name</option>
+            <option value="sku">Sort: SKU Code</option>
+            <option value="name">Sort: Vessel Name</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+            <option value="stock">Inventory Availability</option>
           </select>
 
           <button
             onClick={() => setShowFiltersMobile(!showFiltersMobile)}
-            className="md:hidden px-3 py-2 bg-white border border-black/10 text-[#111113] text-xs font-semibold flex items-center gap-1.5"
+            className="md:hidden px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 text-xs font-semibold flex items-center gap-1.5"
           >
             <Filter size={13} /> Filters
           </button>
         </div>
       </div>
 
-      {/* Filter Ribbon */}
+      {/* Filter Ribbon with Category Pills */}
       <div
-        className={`bg-white border border-black/8 p-4 mb-8 shadow-xs ${
+        className={`bg-white border border-slate-200/90 rounded-xl p-3 sm:p-4 mb-8 shadow-2xs ${
           showFiltersMobile ? 'block' : 'hidden md:block'
         }`}
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Category Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1">
-            <span className="label-bracket mr-2">Category:</span>
-            {[
-              { slug: 'all', label: 'All Systems' },
-              { slug: 'hydraulics', label: 'Hydraulics' },
-              { slug: 'filtration', label: 'Filtration' },
-              { slug: 'cnc-machining', label: 'CNC Machining' },
-              { slug: 'offshore-marine', label: 'Offshore & Marine' },
-            ].map((cat) => (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+              FLEET DIVISION:
+            </span>
+            {categoriesList.map((cat) => (
               <button
                 key={cat.slug}
                 onClick={() => onSelectCategory(cat.slug)}
-                className={`px-3 py-1 text-xs transition cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   selectedCategory === cat.slug
-                    ? 'bg-[#111113] text-white font-medium'
-                    : 'bg-[#F8F7F4] hover:bg-black/10 text-[#111113]/80'
+                    ? 'bg-amber-500 text-white shadow-xs font-semibold'
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/60'
                 }`}
               >
                 {cat.label}
@@ -144,32 +170,32 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
             ))}
           </div>
 
-          {/* Secondary Controls */}
+          {/* Secondary Filter Controls */}
           <div className="flex flex-wrap items-center gap-4 text-xs">
-            <label className="flex items-center gap-2 cursor-pointer select-none text-[#111113]/80 font-medium">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-slate-700 font-medium">
               <input
                 type="checkbox"
                 checked={inStockOnly}
                 onChange={(e) => setInStockOnly(e.target.checked)}
-                className="accent-[#B8860B] h-3.5 w-3.5"
+                className="accent-amber-500 h-3.5 w-3.5"
               />
-              <span>In-Stock Only</span>
+              <span>In-Stock / Ready Hull</span>
             </label>
 
-            <div className="flex items-center gap-1.5 text-[#111113]/70">
-              <span className="mono text-[10px]">Max Price:</span>
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <span className="font-mono text-[11px]">Max Price:</span>
               <select
                 value={maxPriceFilter || ''}
                 onChange={(e) =>
                   setMaxPriceFilter(e.target.value ? Number(e.target.value) : undefined)
                 }
-                className="px-2 py-1 bg-[#F8F7F4] border border-black/10 text-xs cursor-pointer focus:outline-none"
+                className="px-2 py-1 bg-white border border-slate-200 rounded text-xs cursor-pointer focus:outline-none"
               >
                 <option value="">Any</option>
-                <option value="1000">&lt; $1,000</option>
-                <option value="2500">&lt; $2,500</option>
-                <option value="5000">&lt; $5,000</option>
-                <option value="20000">&lt; $20,000</option>
+                <option value="100000">&lt; $100,000</option>
+                <option value="300000">&lt; $300,000</option>
+                <option value="1000000">&lt; $1,000,000</option>
+                <option value="3000000">&lt; $3,000,000</option>
               </select>
             </div>
 
@@ -180,8 +206,9 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
                   setInStockOnly(false);
                   setMaxPriceFilter(undefined);
                   onSelectCategory('all');
+                  if (onResetSearch) onResetSearch();
                 }}
-                className="mono text-[10px] text-[#B8860B] hover:underline font-bold"
+                className="text-xs text-amber-600 hover:text-amber-700 font-bold hover:underline cursor-pointer"
               >
                 RESET FILTERS
               </button>
@@ -190,13 +217,13 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
         </div>
       </div>
 
-      {/* Product Grid (Variation 1 Card Styling) */}
+      {/* Product Grid */}
       {filtered.length === 0 ? (
-        <div className="bg-white border border-black/8 p-12 text-center max-w-md mx-auto my-8">
-          <Package size={36} className="text-[#111113]/30 mx-auto mb-3" />
-          <h3 className="font-editorial text-2xl text-[#111113] mb-1">No matching records</h3>
-          <p className="text-xs text-[#111113]/60 mb-4">
-            Try broadening your search parameters or ask the Gemini AI Copilot.
+        <div className="bg-white border border-slate-200 rounded-xl p-12 text-center max-w-md mx-auto my-8 shadow-xs">
+          <Package size={36} className="text-slate-300 mx-auto mb-3" />
+          <h3 className="text-xl font-bold text-slate-800 mb-1">No matching vessels found</h3>
+          <p className="text-xs text-slate-500 mb-4">
+            Try adjusting your search criteria or query our AI Assistant.
           </p>
           <button
             onClick={() => {
@@ -204,14 +231,15 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
               setInStockOnly(false);
               setMaxPriceFilter(undefined);
               onSelectCategory('all');
+              if (onResetSearch) onResetSearch();
             }}
-            className="px-4 py-2 bg-[#111113] text-white text-xs mono uppercase tracking-wider"
+            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs rounded-lg transition"
           >
             Clear Filters
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((product) => {
             const isCompared = selectedForCompare.some((p) => p.id === product.id);
             const isLowStock = product.stock_quantity > 0 && product.stock_quantity <= 5;
@@ -220,133 +248,113 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
             return (
               <div
                 key={product.id}
-                className="bg-white border border-black/8 p-6 relative flex flex-col justify-between hover:border-[#B8860B] transition-colors shadow-xs group"
+                className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden hover:border-amber-400 hover:shadow-md transition-all flex flex-col justify-between group"
               >
                 <div>
-                  {/* Top Bar: SKU & Stock Tag */}
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="mono text-xs font-bold text-[#B8860B] tracking-widest">
-                      {product.sku}
-                    </span>
-                    <span className="mono text-[10px] text-[#111113]/60">
-                      {isOutOfStock ? (
-                        <span className="text-rose-700 font-semibold">BUILT TO ORDER</span>
-                      ) : isLowStock ? (
-                        <span className="text-amber-700 font-semibold">
-                          LOW STOCK ({product.stock_quantity})
-                        </span>
-                      ) : (
-                        <span>STOCK: {product.stock_quantity}</span>
-                      )}
-                    </span>
-                  </div>
-
-                  {/* Vessel Image & Title */}
-                  <div
-                    onClick={() => onViewProductDetail(product)}
-                    className="h-48 w-full bg-slate-900 border border-black/10 overflow-hidden relative mb-3 cursor-pointer group-hover:border-[#B8860B] transition"
-                  >
+                  {/* Top Image Box */}
+                  <div className="relative aspect-[16/10] bg-slate-900 overflow-hidden cursor-pointer" onClick={() => onViewProductDetail(product)}>
                     <img
                       src={product.image_url}
                       alt={product.title}
-                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-115"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
                     />
-
-                    {/* Hover Zoom HUD indicator */}
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/85 backdrop-blur-xs text-[#B8860B] px-2 py-1 mono text-[9px] uppercase tracking-wider flex items-center gap-1 border border-[#B8860B]/40 shadow-md">
-                      <ZoomIn size={11} />
-                      <span>Inspect CAD Zoom</span>
+                    <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded bg-black/60 backdrop-blur-xs text-[10px] font-mono text-amber-300 font-semibold uppercase">
+                      {product.sku}
                     </div>
 
-                    <div className="absolute bottom-2 left-2 bg-[#111113]/90 text-[#B8860B] px-2 py-0.5 mono text-[9px] uppercase tracking-wider">
-                      {product.category_name}
+                    <div className="absolute top-2.5 right-2.5">
+                      {isOutOfStock ? (
+                        <span className="px-2 py-0.5 rounded bg-slate-800/80 backdrop-blur-xs text-[10px] font-mono text-slate-300 font-semibold">
+                          BUILT TO ORDER
+                        </span>
+                      ) : isLowStock ? (
+                        <span className="px-2 py-0.5 rounded bg-amber-500/90 text-[10px] font-mono text-slate-950 font-bold">
+                          AVAILABLE ({product.stock_quantity})
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded bg-emerald-600/90 text-[10px] font-mono text-white font-semibold">
+                          READY STOCK ({product.stock_quantity})
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  {/* Product Title */}
-                  <h3
-                    onClick={() => onViewProductDetail(product)}
-                    className="font-editorial text-2xl sm:text-2xl font-semibold text-[#111113] my-1 leading-tight hover:text-[#B8860B] transition cursor-pointer"
-                  >
-                    {product.title}
-                  </h3>
+                  {/* Body Content */}
+                  <div className="p-5">
+                    {/* Category Label */}
+                    <div className="text-[11px] font-bold text-amber-600 uppercase tracking-wider mb-1">
+                      {product.category_name}
+                    </div>
 
-                  <p className="text-xs text-[#111113]/70 leading-relaxed line-clamp-2 mb-3">
-                    {product.short_desc}
-                  </p>
+                    <h3
+                      onClick={() => onViewProductDetail(product)}
+                      className="text-base sm:text-lg font-bold text-slate-900 leading-snug hover:text-amber-600 transition-colors cursor-pointer line-clamp-1"
+                      title={product.title}
+                    >
+                      {product.title}
+                    </h3>
 
-                  {/* Technical Specifications Snapshot */}
-                  <div className="border-t border-b border-black/5 py-2.5 my-2 space-y-1 bg-[#F8F7F4]/40 px-2">
-                    {product.specifications.slice(0, 3).map((spec, i) => (
-                      <div key={i} className="flex justify-between items-center text-xs">
-                        <span className="text-[#111113]/50 mono text-[10px]">{spec.key}:</span>
-                        <span className="mono text-[11px] font-semibold text-[#111113]">
-                          {spec.value} {spec.unit}
-                        </span>
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed line-clamp-2">
+                      {product.short_desc}
+                    </p>
+
+                    {/* Highlighted Specifications */}
+                    {product.specifications && product.specifications.length > 0 && (
+                      <div className="mt-3.5 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+                        {product.specifications
+                          .filter((s) => s.highlight)
+                          .slice(0, 4)
+                          .map((spec, i) => (
+                            <div key={i} className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                              <div className="text-[9px] uppercase tracking-wider text-slate-400 font-mono truncate">
+                                {spec.key}
+                              </div>
+                              <div className="text-xs font-bold text-slate-800 truncate mt-0.5 font-mono">
+                                {spec.value} {spec.unit}
+                              </div>
+                            </div>
+                          ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
 
-                {/* Footer: Price & Actions */}
-                <div className="pt-2">
-                  <div className="flex justify-between items-baseline mb-3">
-                    <div>
-                      <span className="label-bracket">Ex-Works Unit Price</span>
-                      <div className="font-editorial text-2xl font-semibold text-[#111113]">
-                        ${product.price_usd.toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="label-bracket">Delivery Timeline</span>
-                      <div className="mono text-xs text-[#111113] font-medium">
-                        {Math.round(product.lead_time_days / 7) || 8} - 16 wks
-                      </div>
+                {/* Card Footer: Price & Actions */}
+                <div className="px-5 pb-5 pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[10px] font-mono text-slate-400 uppercase">FOB UNIT PRICE</div>
+                    <div className="text-sm sm:text-base font-bold text-amber-600 font-mono">
+                      ${product.price_usd.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-1.5">
+                  <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => onToggleCompare(product)}
-                      aria-label={`Compare ${product.sku}`}
-                      className={`px-2 py-2 text-[11px] mono uppercase tracking-wider border transition cursor-pointer flex items-center justify-center gap-1 ${
+                      className={`p-2 rounded-lg border text-xs font-medium transition cursor-pointer ${
                         isCompared
-                          ? 'bg-[#B8860B] border-[#B8860B] text-white font-bold'
-                          : 'border-black/15 text-[#111113] hover:border-[#111113] bg-white'
+                          ? 'border-amber-500 bg-amber-50 text-amber-700'
+                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600'
                       }`}
+                      title={isCompared ? 'Remove from compare' : 'Add to compare'}
                     >
-                      {isCompared ? (
-                        <>
-                          <CheckCircle2 size={12} />
-                          <span>Added</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus size={12} />
-                          <span>Compare</span>
-                        </>
-                      )}
+                      {isCompared ? <Check size={14} className="text-amber-600" /> : <Plus size={14} />}
                     </button>
 
-                    {onViewFormalOffer && (
-                      <button
-                        onClick={() => onViewFormalOffer(product)}
-                        aria-label={`View formal offer for ${product.sku}`}
-                        className="px-2 py-2 border border-[#B8860B] bg-[#B8860B]/10 hover:bg-[#B8860B] hover:text-white text-[#111113] text-[11px] mono uppercase tracking-wider font-bold transition cursor-pointer flex items-center justify-center gap-1"
-                        title="View authentic ISO 9001:2015 Techno-Commercial Offer document matching sample PDF"
-                      >
-                        <Sparkles size={11} className="text-[#B8860B]" />
-                        <span>Offer PDF</span>
-                      </button>
-                    )}
+                    <button
+                      onClick={() => onViewProductDetail(product)}
+                      className="px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer"
+                    >
+                      Specs
+                    </button>
 
                     <button
                       onClick={() => onRequestQuote(product)}
-                      aria-label={`Request quote for ${product.sku}`}
-                      className="px-2 py-2 bg-[#111113] hover:bg-[#B8860B] text-white text-[11px] mono uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1 font-bold"
+                      className="px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition cursor-pointer flex items-center gap-1"
                     >
-                      <FileSpreadsheet size={12} />
                       <span>Quote</span>
+                      <ArrowRight size={12} />
                     </button>
                   </div>
                 </div>
@@ -356,14 +364,14 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
         </div>
       )}
 
-      {/* Floating Comparison Tray (Architectural Ivory & Ink) */}
+      {/* Floating Comparison Tray */}
       {selectedForCompare.length > 0 && (
-        <div className="fixed bottom-6 right-6 z-40 bg-[#111113] text-white border border-[#B8860B]/40 p-4 shadow-2xl flex flex-col sm:flex-row items-center gap-4 max-w-lg">
+        <div className="fixed bottom-20 sm:bottom-6 left-4 sm:left-6 z-40 bg-slate-900 text-white rounded-xl border border-amber-500/50 p-3.5 shadow-2xl flex flex-col sm:flex-row items-center gap-3 sm:gap-4 max-w-md">
           <div>
-            <div className="mono text-xs text-[#B8860B] font-bold">
-              Comparing {selectedForCompare.length}/3 Systems
+            <div className="text-xs text-amber-400 font-bold font-mono">
+              Comparing {selectedForCompare.length}/3 Vessels
             </div>
-            <div className="mono text-[10px] text-white/60 truncate max-w-xs">
+            <div className="text-[11px] text-slate-300 truncate max-w-xs font-mono">
               {selectedForCompare.map((p) => p.sku).join(', ')}
             </div>
           </div>
@@ -371,21 +379,21 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
           <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={onClearCompare}
-              className="mono text-[10px] text-white/50 hover:text-white px-2 py-1"
+              className="text-xs text-slate-400 hover:text-white px-2 py-1 cursor-pointer"
             >
               Clear
             </button>
             <button
               onClick={onOpenCompareModal}
               disabled={selectedForCompare.length < 2}
-              className={`px-4 py-2 mono text-xs uppercase tracking-wider transition flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5 cursor-pointer ${
                 selectedForCompare.length >= 2
-                  ? 'bg-[#B8860B] text-white hover:brightness-110'
-                  : 'bg-white/10 text-white/30 cursor-not-allowed'
+                  ? 'bg-amber-500 text-slate-950 hover:bg-amber-400'
+                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
               }`}
             >
               <Sparkles size={13} />
-              <span>Analyze Side-by-Side</span>
+              <span>Side-by-Side</span>
             </button>
           </div>
         </div>
